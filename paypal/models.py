@@ -5,8 +5,9 @@ from decimal import Decimal
 
 from django.utils.translation import ugettext as _
 
+
 class PayPalResponseStatus(models.Model):
-    summary = models.CharField(max_length = 32)
+    summary = models.CharField(max_length=32)
 
     class Meta:
         verbose_name = _("PayPal Response Status")
@@ -17,17 +18,17 @@ class PayPalResponseStatus(models.Model):
 
 
 class PayPalResponse(models.Model):
-    token = models.CharField(max_length = 256, null = True, blank = True, db_index = True)
-    trans_id = models.CharField(max_length = 256, null = True, blank = True, db_index = True)
-    correlation_id = models.CharField(max_length = 256, null = True, blank = True)
-    response = models.CharField(max_length = 32)
-    error_msg = models.CharField(max_length = 256, null = True, blank = True)
-    error = models.CharField(max_length = 512, null = True, blank = True)
-    currencycode = models.CharField(max_length = 32, null = True, blank = True)
+    token = models.CharField(max_length=256, null=True, blank=True, db_index=True)
+    trans_id = models.CharField(max_length=256, null=True, blank=True, db_index=True)
+    correlation_id = models.CharField(max_length=256, null=True, blank=True)
+    response = models.CharField(max_length=32)
+    error_msg = models.CharField(max_length=256, null=True, blank=True)
+    error = models.CharField(max_length=512, null=True, blank=True)
+    currencycode = models.CharField(max_length=32, null=True, blank=True)
     raw_response = models.TextField()
-    charged = models.DecimalField(decimal_places = 2, max_digits = 7, null = True, blank = True)
+    charged = models.DecimalField(decimal_places=2, max_digits=7, null=True, blank=True)
     status = models.ForeignKey(PayPalResponseStatus)
-    payment_received = models.BooleanField(default = False)
+    payment_received = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _("PayPal Response")
@@ -38,38 +39,42 @@ class PayPalResponse(models.Model):
 
     @staticmethod
     def get_default_status():
-        ps, created = PayPalResponseStatus.objects.get_or_create(summary = _("Sale"))
+        ps, created = PayPalResponseStatus.objects.get_or_create(summary=_("Sale"))
         return ps
 
     @staticmethod
     def get_authorization_status():
-        ps, created = PayPalResponseStatus.objects.get_or_create(summary = _("Authorization"))
+        ps, created = PayPalResponseStatus.objects.get_or_create(summary=_("Authorization"))
         return ps
 
     @staticmethod
     def get_capture_status():
-        ps, created = PayPalResponseStatus.objects.get_or_create(summary = _("Capture"))
+        ps, created = PayPalResponseStatus.objects.get_or_create(summary=_("Capture"))
         return ps
 
     @staticmethod
     def get_cancel_status():
-        ps, created = PayPalResponseStatus.objects.get_or_create(summary = _("Refund"))
+        ps, created = PayPalResponseStatus.objects.get_or_create(summary=_("Refund"))
         return ps
 
-
-    def fill_from_response(self, response, action = "Sale"):
+    def fill_from_response(self, response, action="Sale"):
         """
         For payment:
 
-        {'ORDERTIME': '2009-12-13T07:16:03Z', 'ACK': 'Success', 'TIMESTAMP': '2009-12-13T07:16:04Z', 'CURRENCYCODE': 'AUD',
-        'PAYMENTSTATUS': 'Pending', 'PENDINGREASON': 'multicurrency', 'PAYMENTTYPE': 'instant', 'TOKEN': 'EC-3AX26844Y52324328',
-        'VERSION': '53.0', 'BUILD': '1105502', 'TAXAMT': '0.00', 'REASONCODE': 'None', 'TRANSACTIONID': '9XL27840ED344594X',
+        {'ORDERTIME': '2009-12-13T07:16:03Z', 'ACK': 'Success',
+        'TIMESTAMP': '2009-12-13T07:16:04Z', 'CURRENCYCODE': 'AUD',
+        'PAYMENTSTATUS': 'Pending', 'PENDINGREASON': 'multicurrency',
+        'PAYMENTTYPE': 'instant', 'TOKEN': 'EC-3AX26844Y52324328',
+        'VERSION': '53.0', 'BUILD': '1105502', 'TAXAMT': '0.00',
+        'REASONCODE': 'None', 'TRANSACTIONID': '9XL27840ED344594X',
         'AMT': '13.89', 'CORRELATIONID': 'f13dc648551be', 'TRANSACTIONTYPE': 'expresscheckout'}
 
         or
 
-        {'ACK': 'Failure', 'TIMESTAMP': '2009-12-13T07:43:00Z', 'L_SEVERITYCODE0': 'Error', 'L_SHORTMESSAGE0': 'Invalid token',
-        'L_LONGMESSAGE0': 'Invalid token.', 'VERSION': '53.0', 'BUILD': '1105502', 'L_ERRORCODE0': '10410', 'CORRELATIONID': 'c3e201df48a42'}
+        {'ACK': 'Failure', 'TIMESTAMP': '2009-12-13T07:43:00Z',
+        'L_SEVERITYCODE0': 'Error', 'L_SHORTMESSAGE0': 'Invalid token',
+        'L_LONGMESSAGE0': 'Invalid token.', 'VERSION': '53.0',
+        'BUILD': '1105502', 'L_ERRORCODE0': '10410', 'CORRELATIONID': 'c3e201df48a42'}
 
 
         --------------------------
@@ -77,14 +82,17 @@ class PayPalResponse(models.Model):
 
         For refund:
 
-        {'ACK': 'Failure', 'TIMESTAMP': '2009-12-13T09:51:19Z', 'L_SEVERITYCODE0': 'Error', 'L_SHORTMESSAGE0':
-         'Permission denied', 'L_LONGMESSAGE0': 'You do not have permission to refund this transaction', 'VERSION': '53.0',
-         'BUILD': '1077585', 'L_ERRORCODE0': '10007', 'CORRELATIONID': '3d8fa24c46c65'}
+        {'ACK': 'Failure', 'TIMESTAMP': '2009-12-13T09:51:19Z',
+        'L_SEVERITYCODE0': 'Error', 'L_SHORTMESSAGE0':
+         'Permission denied', 'L_LONGMESSAGE0': 'You do not have permission to refund this transaction',
+         'VERSION': '53.0', 'BUILD': '1077585', 'L_ERRORCODE0': '10007', 'CORRELATIONID': '3d8fa24c46c65'}
 
          or
 
-         {'REFUNDTRANSACTIONID': '9E679139T5135712L', 'FEEREFUNDAMT': '0.70', 'ACK': 'Success', 'TIMESTAMP': '2009-12-13T09:53:06Z',
-         'CURRENCYCODE': 'AUD', 'GROSSREFUNDAMT': '13.89', 'VERSION': '53.0', 'BUILD': '1077585', 'NETREFUNDAMT': '13.19',
+         {'REFUNDTRANSACTIONID': '9E679139T5135712L',
+         'FEEREFUNDAMT': '0.70', 'ACK': 'Success', 'TIMESTAMP': '2009-12-13T09:53:06Z',
+         'CURRENCYCODE': 'AUD', 'GROSSREFUNDAMT': '13.89',
+         'VERSION': '53.0', 'BUILD': '1077585', 'NETREFUNDAMT': '13.19',
          'CORRELATIONID': '6c95d7f979fc1'}
 
         """

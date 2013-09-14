@@ -11,7 +11,7 @@
 # Email: ozgurvt@gmail.com
 
 
-from cgi import parse_qs
+from urlparse import parse_qs
 import urllib
 
 from django.conf import settings
@@ -160,6 +160,12 @@ class PayPal(object):
                 http://www.test.com/return/,
                 **{'SHIPTOSTREET': 'T Street', 'SHIPTOSTATE': 'T State'}
             )
+        If SetExpressCheckout is successfull use TOKEN to redirect to the browser
+        to the address BELOW:
+
+         - https://www.sandbox.paypal.com/cgi-bin/webscr?
+            cmd=_express-checkout&token=TOKEN (for development only URL)
+
         """
         parameters = {
             'METHOD': 'SetExpressCheckout',
@@ -186,15 +192,6 @@ class PayPal(object):
             response_dict, "L_LONGMESSAGE0"
         )
         return False
-
-    """
-    If SetExpressCheckout is successfull use TOKEN to redirect to the browser
-    to the address BELOW:
-
-     - https://www.sandbox.paypal.com/cgi-bin/webscr?
-        cmd=_express-checkout&token=TOKEN (for development only URL)
-
-    """
 
     def GetExpressCheckoutDetails(self, token):
         """
