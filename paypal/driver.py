@@ -193,7 +193,7 @@ class PayPal(object):
         )
         return False
 
-    def GetExpressCheckoutDetails(self, token):
+    def GetExpressCheckoutDetails(self, return_url, cancel_url, token=None):
         """
         This method performs the NVP API method that is responsible from
         getting the payment details. This returns True if successfully fetch
@@ -210,6 +210,8 @@ class PayPal(object):
 
         parameters = {
             'METHOD': "GetExpressCheckoutDetails",
+            'RETURNURL': return_url,
+            'CANCELURL': cancel_url,
             'TOKEN': token,
         }
         query_string = self.signature + urllib.urlencode(parameters)
