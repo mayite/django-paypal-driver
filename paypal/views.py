@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import base64
 
 from decimal import Decimal, ROUND_UP, InvalidOperation
 from django.http import HttpResponseRedirect
@@ -64,7 +65,7 @@ def set_checkout(request, amount, return_url, cancel_url, error_url, template="p
                                }, context_instance=RequestContext(request))
 
 
-def do_checkout(request, error_url, success_url, template="paypal/docheckout.html", currency="USD"):
+def do_checkout(request, amount, error_url, success_url, template="paypal/docheckout.html", currency="USD"):
     """
     Django view to do the actual payment (charges actual money)
     It performs the relevant API method DoExpressCheckoutPayment
@@ -72,19 +73,22 @@ def do_checkout(request, error_url, success_url, template="paypal/docheckout.htm
 
     if request.POST:
         # normalize the given amount
-        amount = request.POST.get("amount")
+        #amount = request.POST.get("amount")
+        amount = amount
         try:
             amount = Decimal(amount)
             amount = str(amount.quantize(Decimal(".01"), rounding=ROUND_UP))
-        except InvalidOperation:
+        except:
             if request.user.is_authenticated():
                 messages.error(request, _("No given valid amount. "
                                           "Please check the amount that will be charged."))
-            return HttpResponseRedirect(error_url)
+            error_message = "No given valid amount. Please check the amount that will be charged."
+            error_message = base64.b64encode(error_message)
+            return HttpResponseRedirect(error_url+"?error="+error_message)
 
         # perform GET
-        token = request.GET.get("token")
-        payerid = request.GET.get("PayerID")
+        token = base64.b64decode(request.GET.get("token"))
+        payerid = base64.b64decode(request.GET.get("PayerID"))
 
         # charge from PayPal
         result, response = process_payment_request(amount, currency, token, payerid)
@@ -94,13 +98,14 @@ def do_checkout(request, error_url, success_url, template="paypal/docheckout.htm
             if request.user.is_authenticated():
                 messages.error(request, _("Amount %s has not been charged, "
                                           "server error is '%s'" % (amount, response.error)))
-            return HttpResponseRedirect(error_url)
+            error_message = "Amount %s has not been charged, server error is '%s'" % (amount, response.error)
+            error_message = base64.b64encode(error_message)
+            return HttpResponseRedirect(error_url+"?error="+error_message)
 
         # Now we are gone, redirect user to success page
         if request.user.is_authenticated():
             messages.info(request, _("Amount %s has been successfully charged, "
                                      "your transaction id is '%s'" % (amount, response.trans_id)))
-
         return HttpResponseRedirect(success_url)
 
     return render_to_response(template,
