@@ -13,7 +13,7 @@ from paypal.models import PayPalResponse
 from paypal.utils import process_payment_request, process_refund_request
 
 
-def set_checkout(request, return_url, cancel_url, error_url, template="paypal/setcheckout.html", currency="USD"):
+def set_checkout(request, return_url, cancel_url, error_url, template="paypal/setcheckout.html", currency="USD", **kwargs):
     """
     Django view to process PayPal SetExpressCheckout API call.
     If response 'Success' or 'SuccessWithWarning' comes,
@@ -42,7 +42,7 @@ def set_checkout(request, return_url, cancel_url, error_url, template="paypal/se
         # call the PayPal driver (2)
         driver = PayPal()
         # call the relevant API method (3)
-        result = driver.SetExpressCheckout(amount, currency, return_url, cancel_url)
+        result = driver.SetExpressCheckout(amount, currency, return_url, cancel_url, **kwargs)
         # perform the response (4)
         if not result:
             print driver.apierror
