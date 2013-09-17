@@ -195,10 +195,8 @@ class PayPal(object):
 
     def GetExpressCheckoutDetails(self, return_url, cancel_url, token=None):
         """
-        This method performs the NVP API method that is responsible from
-        getting the payment details. This returns True if successfully fetch
-        the checkout details, otherwise returns False.
-
+        This method performs the NVP API method that is responsible from getting the payment details.
+        This returns True if successfully fetch the checkout details, otherwise returns False.
         All of the parameters are REQUIRED.
 
         @returns bool
@@ -220,13 +218,10 @@ class PayPal(object):
         self.api_response = response_dict
         state = self._get_value_from_qs(response_dict, "ACK")
         if not state in ["Success", "SuccessWithWarning"]:
-            self.getexpresscheckoutdetailserror = self._get_value_from_qs(
-                response_dict, "L_SHORTMESSAGE0"
-            )
+            self.getexpresscheckoutdetailserror = self._get_value_from_qs(response_dict, "L_SHORTMESSAGE0")
             self.apierror = self.getexpresscheckoutdetailserror
-            return False
-
-        return True
+            return self.getexpresscheckoutdetailserror
+        return response_dict
 
     def DoExpressCheckoutPayment(
         self,
