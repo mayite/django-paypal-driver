@@ -13,7 +13,7 @@ from paypal.models import PayPalResponse
 from paypal.utils import process_payment_request, process_refund_request
 
 
-def set_checkout(request, return_url, cancel_url, error_url, template="paypal/setcheckout.html", currency="USD", **kwargs):
+def set_checkout(request, amount, return_url, cancel_url, error_url, template="paypal/setcheckout.html", currency="USD", **kwargs):
     """
     Django view to process PayPal SetExpressCheckout API call.
     If response 'Success' or 'SuccessWithWarning' comes,
@@ -29,7 +29,7 @@ def set_checkout(request, return_url, cancel_url, error_url, template="paypal/se
 
     if request.POST:
         # normalize the given amount
-        amount = request.POST.get("amount")
+        # amount = request.POST.get("amount")
         try:
             amount = Decimal(amount)
             amount = str(amount.quantize(Decimal(".01"), rounding=ROUND_UP))
